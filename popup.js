@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('price').textContent = result.price;
         document.getElementById('squareFootage').textContent = result.squareFootage;
         document.getElementById('pricePerSqFt').textContent = result.pricePerSqFt;
+        saveResults(result);
     }
 
     function recalculatePricePerSqFt(price, squareFootage) {
@@ -21,6 +22,20 @@ document.addEventListener('DOMContentLoaded', function() {
             return `£${(numericPrice / squareFootage).toFixed(2)}`;
         }
         return 'N/A';
+    }
+
+    function saveResults(results) {
+        chrome.storage.local.set({ 'lastCalculation': results }, function() {
+            console.log('Results saved');
+        });
+    }
+
+    function loadResults() {
+        chrome.storage.local.get(['lastCalculation'], function(result) {
+            if (result.lastCalculation) {
+                updateResult(result.lastCalculation);
+            }
+        });
     }
 
     calculateButton.addEventListener('click', function() {
@@ -80,4 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    loadResults();
 });
