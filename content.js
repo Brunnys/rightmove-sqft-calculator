@@ -82,11 +82,62 @@ async function extractSquareFootage(floorplanUrl) {
 
     console.log('OCR result:', text);
     
-    // Parse the OCR result to find square footage
-    const match = text.match(/(\d+(?:\.\d+)?)\s*(?:sq\s*ft|sq\s*m)/i);
-    const squareFootage = match ? parseFloat(match[1]) : null;
+    // Function to convert written numbers to digits
+    function wordToNumber(word) {
+      const numbers = {
+        'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+        'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+        'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
+        'hundred': 100, 'thousand': 1000, 'million': 1000000
+      };
+      return numbers[word.toLowerCase()] || word;
+    }
+
+    // Improved regex for square feet
+    const sqftRegex = /(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\w+)\s*(?:sq(?:uare)?\.?\s*(?:ft|feet|foot)|ft\.?|sq\.?\s*ft\.?)/i;
     
-    const result = { squareFootage, rawText: text };
+    // Regex for square meters
+    const sqmRegex = /(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\w+)\s*(?:sq(?:uare)?\.?\s*(?:m|meters?|metres?)|m\.?|sq\.?\s*m\.?)/i;
+
+    // Function to extract all matches
+    function extractAllMatches(regex, text) {
+      const matches = [];
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        let value = match[1].replace(/,/g, '');
+        if (isNaN(value)) {
+          value = wordToNumber(value);
+        }
+        matches.push(parseFloat(value));
+        text = text.slice(match.index + match[0].length);
+      }
+      return matches;
+    }
+
+    // Extract all square feet and square meter matches
+    let sqftMatches = extractAllMatches(sqftRegex, text);
+    let sqmMatches = extractAllMatches(sqmRegex, text);
+
+    // Convert sq m to sq ft if necessary
+    if (sqftMatches.length === 0 && sqmMatches.length > 0) {
+      sqftMatches = sqmMatches.map(sqm => sqm * 10.7639);
+    }
+
+    // Get the largest value
+    const squareFootage = Math.max(...sqftMatches, 0);
+
+    let result;
+    if (squareFootage > 0) {
+      console.log(`Extracted: ${squareFootage.toFixed(2)} sq ft`);
+      result = { 
+        squareFootage: squareFootage,
+        unit: 'sq ft',
+        rawText: text 
+      };
+    } else {
+      console.log('No square footage found in text');
+      result = { squareFootage: null, unit: null, rawText: text };
+    }
     
     // Cache the result
     await cacheResult(floorplanUrl, result);
@@ -94,7 +145,7 @@ async function extractSquareFootage(floorplanUrl) {
     return result;
   } catch (error) {
     console.error('Error in extractSquareFootage:', error);
-    return { squareFootage: null, rawText: 'OCR failed: ' + error.message };
+    return { squareFootage: null, unit: null, rawText: 'OCR failed: ' + error.message };
   }
 }
 
@@ -141,11 +192,13 @@ async function handleCalculateRequest() {
     console.log('Found floorplan URL:', floorplanUrl);
 
     let squareFootage = null;
+    let unit = null;
     let rawOcrText = null;
     if (floorplanUrl) {
       console.log('Attempting to extract square footage...');
       const result = await extractSquareFootage(floorplanUrl);
       squareFootage = result.squareFootage;
+      unit = result.unit;
       rawOcrText = result.rawText;
     } else {
       console.log('No floorplan URL found, skipping square footage extraction');
@@ -156,7 +209,7 @@ async function handleCalculateRequest() {
 
     const calculationResult = {
       price: price || 'Not found',
-      squareFootage: squareFootage ? `${squareFootage} sq ft` : 'Not found',
+      squareFootage: squareFootage ? `${squareFootage.toFixed(2)} ${unit}` : 'Not found',
       pricePerSqFt: pricePerSqFt !== 'N/A' ? `£${pricePerSqFt}` : 'N/A',
       timestamp: Date.now() // This should be a number representing milliseconds since epoch
     };
