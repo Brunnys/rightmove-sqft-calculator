@@ -1,0 +1,15 @@
+{
+  "name": "rightmove-chrome-extension2",
+  "version": "1.0.0",
+  "main": "content.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "tesseract.js": "^5.1.1"
+  }
+}
