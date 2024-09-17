@@ -1,0 +1,106 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.card {
+  width: 300px;
+  height: 250px;
+  background: linear-gradient(to bottom right, #EBF4FF, #E0E7FF);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  padding: 16px 16px 8px;
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #1E40AF;
+  text-align: center;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.card-content {
+  padding: 0 16px 16px;
+}
+
+.calculator-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #1E40AF;
+}
+
+.value {
+  font-size: 14px;
+  font-weight: bold;
+  color: #1E3A8A;
+}
+
+.value-container {
+  display: flex;
+  align-items: center;
+}
+
+.edit-button {
+  height: 24px;
+  width: 24px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #1E40AF;
+  margin-left: 4px;
+}
+
+.hidden {
+  display: none;
+}
+
+#squareFootageInput {
+  width: 80px;
+  text-align: right;
+  font-size: 14px;
+  height: 28px;
+  margin-right: 4px;
+}
+
+.border-top {
+  border-top: 1px solid #BFDBFE;
+  padding-top: 8px;
+}
+
+.calculate-button {
+  width: 100%;
+  background-color: #2563EB;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 0;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.calculate-button:hover {
+  background-color: #1D4ED8;
+}

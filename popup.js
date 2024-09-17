@@ -1,100 +1,116 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const calculateButton = document.getElementById('calculateButton');
-    const resultDiv = document.getElementById('result');
-    const editButton = document.getElementById('editSquareFootage');
-    const editInput = document.getElementById('editSquareFootageInput');
-    const manualInput = document.getElementById('manualSquareFootage');
-    const saveButton = document.getElementById('saveSquareFootage');
-
+    const priceElement = document.getElementById('price');
+    const squareFootageElement = document.getElementById('squareFootage');
+    const squareFootageInput = document.getElementById('squareFootageInput');
+    const editButton = document.getElementById('editButton');
+    const pricePerSqFtElement = document.getElementById('pricePerSqFt');
+    const calculateButton = document.querySelector('.calculate-button');
+  
     let currentUrl = '';
-    let currentPrice = '';
-
-    function updateResult(result) {
-        document.getElementById('price').textContent = result.price;
-        document.getElementById('squareFootage').textContent = result.squareFootage;
-        document.getElementById('pricePerSqFt').textContent = result.pricePerSqFt;
-        saveResults(result);
+    let isEditing = false;
+  
+    // Load any saved results and manual entry
+    loadResults();
+  
+    function updateDisplay(result) {
+      priceElement.textContent = result.price;
+      squareFootageElement.textContent = result.squareFootage;
+      pricePerSqFtElement.textContent = result.pricePerSqFt;
     }
-
-    function recalculatePricePerSqFt(price, squareFootage) {
-        if (price && squareFootage) {
-            const numericPrice = parseFloat(price.replace(/[£,]/g, ''));
-            return `£${(numericPrice / squareFootage).toFixed(2)}`;
+  
+    function toggleEdit() {
+      isEditing = !isEditing;
+      if (isEditing) {
+        squareFootageElement.classList.add('hidden');
+        squareFootageInput.classList.remove('hidden');
+        squareFootageInput.value = squareFootageElement.textContent.replace(' sq ft', '').replace(' (edited)', '');
+        squareFootageInput.focus();
+      } else {
+        squareFootageElement.classList.remove('hidden');
+        squareFootageInput.classList.add('hidden');
+        const newSquareFootage = parseFloat(squareFootageInput.value);
+        if (!isNaN(newSquareFootage) && newSquareFootage > 0) {
+          squareFootageElement.textContent = `${newSquareFootage.toFixed(2)} sq ft (edited)`;
+          saveManualEntry(newSquareFootage);
+          recalculateAndUpdate();
         }
-        return 'N/A';
+      }
     }
-
-    function saveResults(results) {
-        chrome.storage.local.set({ 'lastCalculation': results }, function() {
-            console.log('Results saved');
+  
+    function recalculateAndUpdate() {
+      const price = parseFloat(priceElement.textContent.replace(/[£,]/g, ''));
+      const squareFootage = parseFloat(squareFootageElement.textContent);
+      if (!isNaN(price) && !isNaN(squareFootage) && squareFootage > 0) {
+        const pricePerSqFt = (price / squareFootage).toFixed(2);
+        pricePerSqFtElement.textContent = `£${pricePerSqFt}`;
+        saveResults();
+      }
+    }
+  
+    function saveResults() {
+      const results = {
+        price: priceElement.textContent,
+        squareFootage: squareFootageElement.textContent,
+        pricePerSqFt: pricePerSqFtElement.textContent
+      };
+      chrome.storage.local.set({ [currentUrl]: results }, function() {
+        console.log('Results saved');
+      });
+    }
+  
+    function saveManualEntry(manualValue) {
+      chrome.storage.local.get(currentUrl, function(result) {
+        const data = result[currentUrl] || {};
+        data.manualSquareFootage = manualValue;
+        chrome.storage.local.set({[currentUrl]: data}, function() {
+          console.log('Manual square footage saved for:', currentUrl);
         });
+      });
     }
-
+  
     function loadResults() {
-        chrome.storage.local.get(['lastCalculation'], function(result) {
-            if (result.lastCalculation) {
-                updateResult(result.lastCalculation);
-            }
-        });
-    }
-
-    calculateButton.addEventListener('click', function() {
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-            currentUrl = tabs[0].url;
-            chrome.tabs.sendMessage(tabs[0].id, {action: "calculate"}, function(response) {
-                if (chrome.runtime.lastError) {
-                    resultDiv.innerHTML = `<p>Error: ${chrome.runtime.lastError.message}</p>`;
-                    return;
-                }
-                if (response && response.result) {
-                    updateResult(response.result);
-                    currentPrice = response.result.price;
-                } else if (response && response.error) {
-                    resultDiv.innerHTML = `<p>Error: ${response.error}</p>`;
-                } else {
-                    resultDiv.innerHTML = '<p>No result received</p>';
-                }
-            });
-        });
-    });
-
-    editButton.addEventListener('click', function() {
-        editInput.style.display = 'block';
-        const currentSquareFootage = document.getElementById('squareFootage').textContent;
-        if (currentSquareFootage !== 'No floor plan found' && currentSquareFootage !== 'Poor floorplan image quality, cannot read') {
-            manualInput.value = parseFloat(currentSquareFootage);
-        }
-    });
-
-    saveButton.addEventListener('click', function() {
-        const manualValue = parseFloat(manualInput.value);
-        if (isNaN(manualValue) || manualValue <= 0) {
-            alert('Please enter a valid positive number for square footage.');
-            return;
-        }
-
-        const newSquareFootage = manualValue.toFixed(2);
-        document.getElementById('squareFootage').textContent = `${newSquareFootage} sq ft (edited)`;
-        document.getElementById('pricePerSqFt').textContent = recalculatePricePerSqFt(currentPrice, manualValue);
-        editInput.style.display = 'none';
-
-        // Save the manual entry to storage
-        chrome.storage.local.set({[currentUrl]: {manualSquareFootage: manualValue}}, function() {
-            console.log('Manual square footage saved for:', currentUrl);
-        });
-    });
-
-    // Load manual entry if it exists
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         currentUrl = tabs[0].url;
         chrome.storage.local.get(currentUrl, function(result) {
-            if (result[currentUrl] && result[currentUrl].manualSquareFootage) {
-                const manualValue = result[currentUrl].manualSquareFootage;
-                document.getElementById('squareFootage').textContent = `${manualValue.toFixed(2)} sq ft (edited)`;
-                manualInput.value = manualValue;
+          if (result[currentUrl]) {
+            if (result[currentUrl].manualSquareFootage) {
+              const manualValue = result[currentUrl].manualSquareFootage;
+              squareFootageElement.textContent = `${manualValue.toFixed(2)} sq ft (edited)`;
+              squareFootageInput.value = manualValue;
+            } else {
+              updateDisplay(result[currentUrl]);
             }
+          }
         });
+      });
+    }
+  
+    calculateButton.addEventListener('click', function() {
+      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, {action: "calculate"}, function(response) {
+          if (chrome.runtime.lastError) {
+            console.error('Error:', chrome.runtime.lastError.message);
+            return;
+          }
+          if (response && response.result) {
+            updateDisplay(response.result);
+            saveResults();
+          }
+        });
+      });
     });
-
-    loadResults();
-});
+  
+    editButton.addEventListener('click', toggleEdit);
+  
+    squareFootageInput.addEventListener('keyup', function(event) {
+      if (event.key === 'Enter') {
+        toggleEdit();
+      }
+    });
+  
+    squareFootageInput.addEventListener('blur', function() {
+      if (isEditing) {
+        toggleEdit();
+      }
+    });
+  });
