@@ -1,56 +1,83 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const calculateBtn = document.getElementById('calculateBtn');
+    const calculateButton = document.getElementById('calculateButton');
     const resultDiv = document.getElementById('result');
+    const editButton = document.getElementById('editSquareFootage');
+    const editInput = document.getElementById('editSquareFootageInput');
+    const manualInput = document.getElementById('manualSquareFootage');
+    const saveButton = document.getElementById('saveSquareFootage');
 
-    // Load and display the last calculation result when popup opens
-    chrome.storage.local.get('lastCalculation', function(data) {
-        if (data.lastCalculation) {
-            displayResult(data.lastCalculation);
+    let currentUrl = '';
+    let currentPrice = '';
+
+    function updateResult(result) {
+        document.getElementById('price').textContent = result.price;
+        document.getElementById('squareFootage').textContent = result.squareFootage;
+        document.getElementById('pricePerSqFt').textContent = result.pricePerSqFt;
+    }
+
+    function recalculatePricePerSqFt(price, squareFootage) {
+        if (price && squareFootage) {
+            const numericPrice = parseFloat(price.replace(/[£,]/g, ''));
+            return `£${(numericPrice / squareFootage).toFixed(2)}`;
         }
-    });
+        return 'N/A';
+    }
 
-    calculateBtn.addEventListener('click', function() {
-        calculateBtn.disabled = true;
-        resultDiv.textContent = 'Calculating...';
-
+    calculateButton.addEventListener('click', function() {
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            currentUrl = tabs[0].url;
             chrome.tabs.sendMessage(tabs[0].id, {action: "calculate"}, function(response) {
-                calculateBtn.disabled = false;
                 if (chrome.runtime.lastError) {
-                    resultDiv.textContent = 'Error: ' + chrome.runtime.lastError.message;
+                    resultDiv.innerHTML = `<p>Error: ${chrome.runtime.lastError.message}</p>`;
                     return;
                 }
                 if (response && response.result) {
-                    displayResult(response.result);
+                    updateResult(response.result);
+                    currentPrice = response.result.price;
                 } else if (response && response.error) {
-                    resultDiv.textContent = 'Error: ' + response.error;
+                    resultDiv.innerHTML = `<p>Error: ${response.error}</p>`;
                 } else {
-                    resultDiv.textContent = 'Unexpected response format';
+                    resultDiv.innerHTML = '<p>No result received</p>';
                 }
             });
         });
     });
-});
 
-function displayResult(result) {
-    const resultDiv = document.getElementById('result');
-    let timestampString = 'Unknown';
-    
-    if (result.timestamp) {
-        const date = new Date(result.timestamp);
-        if (!isNaN(date.getTime())) { // Check if the date is valid
-            timestampString = date.toLocaleString();
-        } else {
-            console.error('Invalid timestamp:', result.timestamp);
+    editButton.addEventListener('click', function() {
+        editInput.style.display = 'block';
+        const currentSquareFootage = document.getElementById('squareFootage').textContent;
+        if (currentSquareFootage !== 'No floor plan found' && currentSquareFootage !== 'Poor floorplan image quality, cannot read') {
+            manualInput.value = parseFloat(currentSquareFootage);
         }
-    }
+    });
 
-    resultDiv.innerHTML = `
-        <p><strong>Price:</strong> ${result.price}</p>
-        <p><strong>Square Footage:</strong> ${result.squareFootage}</p>
-        <p><strong>Price per sq ft:</strong> ${result.pricePerSqFt}</p>
-        <p><small>Last calculated: ${timestampString}</small></p>
-    `;
-}
+    saveButton.addEventListener('click', function() {
+        const manualValue = parseFloat(manualInput.value);
+        if (isNaN(manualValue) || manualValue <= 0) {
+            alert('Please enter a valid positive number for square footage.');
+            return;
+        }
 
-console.log('Popup script loaded');
+        const newSquareFootage = manualValue.toFixed(2);
+        document.getElementById('squareFootage').textContent = `${newSquareFootage} sq ft (edited)`;
+        document.getElementById('pricePerSqFt').textContent = recalculatePricePerSqFt(currentPrice, manualValue);
+        editInput.style.display = 'none';
+
+        // Save the manual entry to storage
+        chrome.storage.local.set({[currentUrl]: {manualSquareFootage: manualValue}}, function() {
+            console.log('Manual square footage saved for:', currentUrl);
+        });
+    });
+
+    // Load manual entry if it exists
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        currentUrl = tabs[0].url;
+        chrome.storage.local.get(currentUrl, function(result) {
+            if (result[currentUrl] && result[currentUrl].manualSquareFootage) {
+                const manualValue = result[currentUrl].manualSquareFootage;
+                document.getElementById('squareFootage').textContent = `${manualValue.toFixed(2)} sq ft (edited)`;
+                manualInput.value = manualValue;
+            }
+        });
+    });
+});
