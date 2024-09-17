@@ -64,8 +64,20 @@ async function extractSquareFootage(floorplanUrl) {
     }
 
     console.log('Found floorplan image:', floorplanImage.src);
+    
+    // Use the background script to fetch the image
+    const response = await new Promise(resolve => {
+      chrome.runtime.sendMessage({ action: "fetchImage", url: floorplanImage.src }, resolve);
+    });
+
+    if (response.error) {
+      throw new Error(response.error);
+    }
+
+    const dataUrl = response.dataUrl;
+    
     const worker = await Tesseract.createWorker('eng');
-    const { data: { text } } = await worker.recognize(floorplanImage.src);
+    const { data: { text } } = await worker.recognize(dataUrl);
     await worker.terminate();
 
     console.log('OCR result:', text);

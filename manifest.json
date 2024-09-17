@@ -4,12 +4,11 @@
     "version": "1.0",
     "description": "Calculate price per square foot for Rightmove listings",
     "permissions": [
-        "activeTab",
         "storage",
-        "https://www.rightmove.co.uk/*"
+        "activeTab"
     ],
     "host_permissions": [
-        "https://media.rightmove.co.uk/*"
+        "https://*.rightmove.co.uk/*"
     ],
     "background": {
         "service_worker": "background.js"
