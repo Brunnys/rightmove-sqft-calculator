@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
       priceElement.textContent = result.price;
       squareFootageElement.textContent = result.squareFootage;
       pricePerSqFtElement.textContent = result.pricePerSqFt;
+      if (result.timestamp) {
+        updateLastUpdatedTime(result.timestamp);
+      }
     }
 
     function toggleEdit() {
@@ -53,10 +56,12 @@ document.addEventListener('DOMContentLoaded', function() {
       const results = {
         price: priceElement.textContent,
         squareFootage: squareFootageElement.textContent,
-        pricePerSqFt: pricePerSqFtElement.textContent
+        pricePerSqFt: pricePerSqFtElement.textContent,
+        timestamp: new Date().toISOString()
       };
       chrome.storage.local.set({ [currentUrl]: results }, function() {
         console.log('Results saved');
+        updateLastUpdatedTime(results.timestamp);
       });
     }
 
@@ -106,16 +111,15 @@ document.addEventListener('DOMContentLoaded', function() {
           hideLoading();
           if (chrome.runtime.lastError) {
             console.error('Error:', chrome.runtime.lastError.message);
-            // Display error message to user
             displayError("Could not establish connection. Please refresh the page and try again.");
             return;
           }
           if (response && response.result) {
+            response.result.timestamp = new Date().toISOString();
             updateDisplay(response.result);
             saveResults();
           } else {
-            // Handle case where response doesn't contain expected data
-            displayError("Calculation failed. Please refresh the page and try again.");
+            displayError("Calculation failed. Please try again.");
           }
         });
       });
@@ -145,6 +149,15 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
           errorElement.classList.add('hidden');
         }, 5000);
+      }
+    }
+
+    function updateLastUpdatedTime(timestamp) {
+      const lastUpdatedElement = document.getElementById('lastUpdated');
+      if (lastUpdatedElement) {
+        const date = new Date(timestamp);
+        lastUpdatedElement.textContent = `Last updated: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+        lastUpdatedElement.classList.remove('hidden');
       }
     }
   });

@@ -128,18 +128,18 @@ async function extractSquareFootage(floorplanUrl) {
         unit: 'sq ft',
         rawText: text 
       };
+      // Only cache successful results
+      await cacheResult(floorplanUrl, result);
     } else {
-      console.log('No square footage found in text');
+      console.log('No sq ft found in text');
       result = { 
         squareFootage: null, 
         unit: null, 
         rawText: text,
-        error: "Poor floorplan image quality, cannot read"
+        error: "Can't find sq ft, enter manually"
       };
+      // Do not cache unsuccessful results
     }
-    
-    // Cache the result
-    await cacheResult(floorplanUrl, result);
     
     return result;
   } catch (error) {
@@ -148,8 +148,9 @@ async function extractSquareFootage(floorplanUrl) {
       squareFootage: null, 
       unit: null, 
       rawText: 'OCR failed: ' + error.message,
-      error: "Poor floorplan image quality, cannot read"
+      error: "Poor floorplan image quality"
     };
+    // Do not cache error results
   }
 }
 
@@ -204,7 +205,7 @@ async function handleCalculateRequest() {
       if (result.squareFootage) {
         squareFootage = result.squareFootage;
       } else {
-        squareFootageMessage = result.error || "Unable to extract square footage";
+        squareFootageMessage = result.error || "Unable to extract sq ft";
       }
     } else {
       console.log('No floorplan URL found');
