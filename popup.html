@@ -36,17 +36,13 @@
           <span class="value" id="pricePerSqFt"></span>
         </div>
         <button class="calculate-button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="2" width="20" height="20" rx="2" ry="2"></rect>
-            <line x1="8" y1="9" x2="16" y2="9"></line>
-            <line x1="8" y1="13" x2="16" y2="13"></line>
-            <line x1="8" y1="17" x2="16" y2="17"></line>
-          </svg>
-          Calculate
+          <span class="spinner hidden"></span>
+          <span class="button-text">Calculate</span>
         </button>
       </div>
     </div>
   </div>
+  <div id="error-message" class="hidden"></div>
   <script src="popup.js"></script>
 </body>
 </html>

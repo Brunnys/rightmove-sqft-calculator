@@ -5,19 +5,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const editButton = document.getElementById('editButton');
     const pricePerSqFtElement = document.getElementById('pricePerSqFt');
     const calculateButton = document.querySelector('.calculate-button');
-  
+    const spinner = calculateButton.querySelector('.spinner');
+    const buttonText = calculateButton.querySelector('.button-text');
+
     let currentUrl = '';
     let isEditing = false;
-  
+
     // Load any saved results and manual entry
     loadResults();
-  
+
     function updateDisplay(result) {
       priceElement.textContent = result.price;
       squareFootageElement.textContent = result.squareFootage;
       pricePerSqFtElement.textContent = result.pricePerSqFt;
     }
-  
+
     function toggleEdit() {
       isEditing = !isEditing;
       if (isEditing) {
@@ -36,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
     }
-  
+
     function recalculateAndUpdate() {
       const price = parseFloat(priceElement.textContent.replace(/[£,]/g, ''));
       const squareFootage = parseFloat(squareFootageElement.textContent);
@@ -46,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
         saveResults();
       }
     }
-  
+
     function saveResults() {
       const results = {
         price: priceElement.textContent,
@@ -57,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('Results saved');
       });
     }
-  
+
     function saveManualEntry(manualValue) {
       chrome.storage.local.get(currentUrl, function(result) {
         const data = result[currentUrl] || {};
@@ -67,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       });
     }
-  
+
     function loadResults() {
       chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         currentUrl = tabs[0].url;
@@ -84,33 +86,65 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       });
     }
-  
+
+    function showLoading() {
+      spinner.classList.remove('hidden');
+      buttonText.textContent = 'Calculating...';
+      calculateButton.disabled = true;
+    }
+
+    function hideLoading() {
+      spinner.classList.add('hidden');
+      buttonText.textContent = 'Calculate';
+      calculateButton.disabled = false;
+    }
+
     calculateButton.addEventListener('click', function() {
+      showLoading();
       chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         chrome.tabs.sendMessage(tabs[0].id, {action: "calculate"}, function(response) {
+          hideLoading();
           if (chrome.runtime.lastError) {
             console.error('Error:', chrome.runtime.lastError.message);
+            // Display error message to user
+            displayError("Could not establish connection. Please refresh the page and try again.");
             return;
           }
           if (response && response.result) {
             updateDisplay(response.result);
             saveResults();
+          } else {
+            // Handle case where response doesn't contain expected data
+            displayError("Calculation failed. Please refresh the page and try again.");
           }
         });
       });
     });
-  
+
     editButton.addEventListener('click', toggleEdit);
-  
+
     squareFootageInput.addEventListener('keyup', function(event) {
       if (event.key === 'Enter') {
         toggleEdit();
       }
     });
-  
+
     squareFootageInput.addEventListener('blur', function() {
       if (isEditing) {
         toggleEdit();
       }
     });
+
+    function displayError(message) {
+      // Assuming you have an element to display errors, e.g., <div id="error-message"></div>
+      const errorElement = document.getElementById('error-message');
+      if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.classList.remove('hidden');
+        // Optionally, hide the error message after a few seconds
+        setTimeout(() => {
+          errorElement.classList.add('hidden');
+        }, 5000);
+      }
+    }
   });
