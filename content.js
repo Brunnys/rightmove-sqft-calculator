@@ -27,14 +27,8 @@ function extractPrice() {
 }
 
 function findFloorplanUrl() {
-  // Instead of searching for the image, look for the floorplan link
-  const floorplanLink = document.querySelector('a[href*="#/floorplan"]');
-  if (floorplanLink) {
-    console.log('Found floorplan link:', floorplanLink.href);
-    return floorplanLink.href;
-  }
-  console.log('No floorplan link found');
-  return null;
+    const floorplanLink = document.querySelector('a[href*="floorplan"]');
+    return floorplanLink ? floorplanLink.href : null;
 }
 
 // New function to perform OCR on the floorplan image
@@ -136,7 +130,12 @@ async function extractSquareFootage(floorplanUrl) {
       };
     } else {
       console.log('No square footage found in text');
-      result = { squareFootage: null, unit: null, rawText: text };
+      result = { 
+        squareFootage: null, 
+        unit: null, 
+        rawText: text,
+        error: "Poor floorplan image quality, cannot read"
+      };
     }
     
     // Cache the result
@@ -145,7 +144,12 @@ async function extractSquareFootage(floorplanUrl) {
     return result;
   } catch (error) {
     console.error('Error in extractSquareFootage:', error);
-    return { squareFootage: null, unit: null, rawText: 'OCR failed: ' + error.message };
+    return { 
+      squareFootage: null, 
+      unit: null, 
+      rawText: 'OCR failed: ' + error.message,
+      error: "Poor floorplan image quality, cannot read"
+    };
   }
 }
 
@@ -192,33 +196,28 @@ async function handleCalculateRequest() {
     console.log('Found floorplan URL:', floorplanUrl);
 
     let squareFootage = null;
-    let unit = null;
-    let rawOcrText = null;
+    let squareFootageMessage = null;
+
     if (floorplanUrl) {
       console.log('Attempting to extract square footage...');
       const result = await extractSquareFootage(floorplanUrl);
-      squareFootage = result.squareFootage;
-      unit = result.unit;
-      rawOcrText = result.rawText;
+      if (result.squareFootage) {
+        squareFootage = result.squareFootage;
+      } else {
+        squareFootageMessage = result.error || "Unable to extract square footage";
+      }
     } else {
-      console.log('No floorplan URL found, skipping square footage extraction');
+      console.log('No floorplan URL found');
+      squareFootageMessage = "No floorplan found";
     }
-
-    const pricePerSqFt = price && squareFootage ? 
-      (parseFloat(price.replace(/[£,]/g, '')) / squareFootage).toFixed(2) : 'N/A';
 
     const calculationResult = {
       price: price || 'Not found',
-      squareFootage: squareFootage ? `${squareFootage.toFixed(2)} ${unit}` : 'Not found',
-      pricePerSqFt: pricePerSqFt !== 'N/A' ? `£${pricePerSqFt}` : 'N/A',
-      timestamp: Date.now() // This should be a number representing milliseconds since epoch
+      squareFootage: squareFootage ? `${squareFootage.toFixed(2)} sq ft` : squareFootageMessage,
+      pricePerSqFt: price && squareFootage ? `£${(parseFloat(price.replace(/[£,]/g, '')) / squareFootage).toFixed(2)}` : 'N/A'
     };
 
-    // Store the result in chrome.storage.local
-    chrome.storage.local.set({ 'lastCalculation': calculationResult }, () => {
-      console.log('Calculation result stored');
-    });
-
+    console.log('Calculation result:', calculationResult);
     return calculationResult;
   } catch (error) {
     console.error('Error in handleCalculateRequest:', error);
@@ -232,7 +231,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "calculate") {
     handleCalculateRequest()
       .then(result => {
-        console.log('Calculation result:', result);
+        console.log('Sending calculation result:', result);
         sendResponse({ result });
       })
       .catch(error => {
