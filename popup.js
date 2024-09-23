@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!isNaN(squareMeters)) {
         const squareFootage = (squareMeters * 10.7639).toFixed(2);
         squareFootageElement.textContent = `${squareFootage} sq ft`;
-        squareFootageLabel.textContent = 'Square Footage:';
+        squareFootageLabel.textContent = 'Square Feet:';
         const pricePerSqM = parseFloat(pricePerSqFtElement.textContent.replace(/[£,]/g, ''));
         if (!isNaN(pricePerSqM)) {
           const pricePerSqFt = Math.round(pricePerSqM / 10.7639); // Round to the nearest whole pound

@@ -5,7 +5,7 @@ body {
 }
 
 .card {
-  width: 300px;
+  width: 350px;
   height: 250px;
   background: linear-gradient(to bottom right, #EBF4FF, #E0E7FF);
   border-radius: 8px;
