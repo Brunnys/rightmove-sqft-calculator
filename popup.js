@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const price = parseFloat(priceElement.textContent.replace(/[£,]/g, ''));
       const squareFootage = parseFloat(squareFootageElement.textContent);
       if (!isNaN(price) && !isNaN(squareFootage) && squareFootage > 0) {
-        const pricePerSqFt = (price / squareFootage).toFixed(2);
+        const pricePerSqFt = Math.round(price / squareFootage); // Round to the nearest whole pound
         pricePerSqFtElement.textContent = `£${pricePerSqFt}`;
         saveResults();
       }
@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
         squareFootageLabel.textContent = 'Square Meters:';
         const pricePerSqFt = parseFloat(pricePerSqFtElement.textContent.replace(/[£,]/g, ''));
         if (!isNaN(pricePerSqFt)) {
-          const pricePerSqM = (pricePerSqFt * 10.7639).toFixed(2);
+          const pricePerSqM = Math.round(pricePerSqFt * 10.7639); // Round to the nearest whole pound
           pricePerSqFtElement.textContent = `£${pricePerSqM}`;
           pricePerSqFtLabel.textContent = 'Price per sq m:';
         }
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
         squareFootageLabel.textContent = 'Square Footage:';
         const pricePerSqM = parseFloat(pricePerSqFtElement.textContent.replace(/[£,]/g, ''));
         if (!isNaN(pricePerSqM)) {
-          const pricePerSqFt = (pricePerSqM / 10.7639).toFixed(2);
+          const pricePerSqFt = Math.round(pricePerSqM / 10.7639); // Round to the nearest whole pound
           pricePerSqFtElement.textContent = `£${pricePerSqFt}`;
           pricePerSqFtLabel.textContent = 'Price per sq ft:';
         }
