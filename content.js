@@ -31,7 +31,6 @@ function findFloorplanUrl() {
     return floorplanLink ? floorplanLink.href : null;
 }
 
-// New function to perform OCR on the floorplan image
 async function extractSquareFootage(floorplanUrl) {
   try {
     // Check cache first
@@ -42,7 +41,7 @@ async function extractSquareFootage(floorplanUrl) {
     }
 
     console.log('Fetching floorplan image:', floorplanUrl);
-    
+
     // If we're not on the floorplan page, navigate to it
     if (!window.location.hash.includes('#/floorplan')) {
       console.log('Navigating to floorplan page...');
@@ -58,7 +57,7 @@ async function extractSquareFootage(floorplanUrl) {
     }
 
     console.log('Found floorplan image:', floorplanImage.src);
-    
+
     // Use the background script to fetch the image
     const response = await new Promise(resolve => {
       chrome.runtime.sendMessage({ action: "fetchImage", url: floorplanImage.src }, resolve);
@@ -69,13 +68,13 @@ async function extractSquareFootage(floorplanUrl) {
     }
 
     const dataUrl = response.dataUrl;
-    
+
     const worker = await Tesseract.createWorker('eng');
     const { data: { text } } = await worker.recognize(dataUrl);
     await worker.terminate();
 
     console.log('OCR result:', text);
-    
+
     // Function to convert written numbers to digits
     function wordToNumber(word) {
       const numbers = {
@@ -88,10 +87,10 @@ async function extractSquareFootage(floorplanUrl) {
     }
 
     // Improved regex for square feet
-    const sqftRegex = /(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\w+)\s*(?:sq(?:uare)?\.?\s*(?:ft|feet|foot)|ft\.?|sq\.?\s*ft\.?)/i;
-    
+    const sqftRegex = /(?:\(|\b)(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\w+)\s*(?:sq(?:uare)?\.?\s*(?:ft|feet|foot|ft)?|ft\.?|sq\.?\s*ft\.?)(?:\)|\b)/gi;
+
     // Regex for square meters
-    const sqmRegex = /(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\w+)\s*(?:sq(?:uare)?\.?\s*(?:m|meters?|metres?)|m\.?|sq\.?\s*m\.?)/i;
+    const sqmRegex = /(?:\(|\b)(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\w+)\s*(?:sq(?:uare)?\.?\s*(?:m|meters?|metres?|m2)?|m\.?|sq\.?\s*m\.?)(?:\)|\b)/gi;
 
     // Function to extract all matches
     function extractAllMatches(regex, text) {
@@ -123,30 +122,30 @@ async function extractSquareFootage(floorplanUrl) {
     let result;
     if (squareFootage > 0) {
       console.log(`Extracted: ${squareFootage.toFixed(2)} sq ft`);
-      result = { 
+      result = {
         squareFootage: squareFootage,
         unit: 'sq ft',
-        rawText: text 
+        rawText: text
       };
       // Only cache successful results
       await cacheResult(floorplanUrl, result);
     } else {
       console.log('No sq ft found in text');
-      result = { 
-        squareFootage: null, 
-        unit: null, 
+      result = {
+        squareFootage: null,
+        unit: null,
         rawText: text,
         error: "Poor image quality. Can't find sq ft, enter manually"
       };
       // Do not cache unsuccessful results
     }
-    
+
     return result;
   } catch (error) {
     console.error('Error in extractSquareFootage:', error);
-    return { 
-      squareFootage: null, 
-      unit: null, 
+    return {
+      squareFootage: null,
+      unit: null,
       rawText: 'OCR failed: ' + error.message,
       error: "Poor floorplan image quality"
     };
