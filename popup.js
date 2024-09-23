@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let currentUrl = '';
     let isEditing = false;
+    let isSquareFootageEdited = false;
 
     // Load any saved results and manual entry
     loadResults();
@@ -37,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!isNaN(newSquareFootage) && newSquareFootage > 0) {
           squareFootageElement.textContent = `${newSquareFootage.toFixed(2)} sq ft (edited)`;
           saveManualEntry(newSquareFootage);
-          recalculateAndUpdate();
+          isSquareFootageEdited = true; // Set the flag to indicate the square footage has been edited
         }
       }
     }
@@ -115,9 +116,26 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
           }
           if (response && response.result) {
-            response.result.timestamp = new Date().toISOString();
-            updateDisplay(response.result);
-            saveResults();
+            if (isSquareFootageEdited) {
+              // Use the edited square footage value
+              const newSquareFootage = parseFloat(squareFootageInput.value);
+              if (!isNaN(newSquareFootage) && newSquareFootage > 0) {
+                squareFootageElement.textContent = `${newSquareFootage.toFixed(2)} sq ft (edited)`;
+                response.result.squareFootage = newSquareFootage;
+                response.result.pricePerSqFt = `£${(parseFloat(priceElement.textContent.replace(/[£,]/g, '')) / newSquareFootage).toFixed(2)}`;
+                response.result.timestamp = new Date().toISOString();
+                updateDisplay(response.result);
+                saveResults();
+                isSquareFootageEdited = false; // Reset the flag
+              } else {
+                displayError("Invalid square footage value. Please try again.");
+              }
+            } else {
+              // Use the original calculation result
+              response.result.timestamp = new Date().toISOString();
+              updateDisplay(response.result);
+              saveResults();
+            }
           } else {
             displayError("Calculation failed. Please try again.");
           }
