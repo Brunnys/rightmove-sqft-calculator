@@ -136,7 +136,7 @@ async function extractSquareFootage(floorplanUrl) {
         squareFootage: null, 
         unit: null, 
         rawText: text,
-        error: "Can't find sq ft, enter manually"
+        error: "Poor image quality. Can't find sq ft, enter manually"
       };
       // Do not cache unsuccessful results
     }
