@@ -56,6 +56,7 @@ body {
 .value-container {
   display: flex;
   align-items: center;
+  justify-content: flex-end; /* Align items to the right */
   gap: 4px; /* Adjust this value to control the spacing between the value and the switch */
 }
 
