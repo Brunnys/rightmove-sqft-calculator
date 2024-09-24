@@ -181,6 +181,15 @@ async function cacheResult(url, data) {
   });
 }
 
+// Function to log the time taken for a calculation
+async function logTimeTaken(fn, ...args) {
+  const startTime = performance.now();
+  const result = await fn(...args);
+  const endTime = performance.now();
+  console.log(`Time taken: ${(endTime - startTime).toFixed(2)} milliseconds`);
+  return result;
+}
+
 // Main function to handle the calculation request
 async function handleCalculateRequest() {
   try {
@@ -224,7 +233,7 @@ async function handleCalculateRequest() {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Message received in content script:', request);
   if (request.action === "calculate") {
-    handleCalculateRequest()
+    logTimeTaken(handleCalculateRequest)
       .then(result => {
         console.log('Sending calculation result:', result);
         sendResponse({ result });
