@@ -75,46 +75,41 @@ async function extractSquareFootage(floorplanUrl) {
 
     console.log('OCR result:', text);
 
-    // Function to convert written numbers to digits
-    function wordToNumber(word) {
-      const numbers = {
-        'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
-        'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
-        'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90,
-        'hundred': 100, 'thousand': 1000, 'million': 1000000
-      };
-      return numbers[word.toLowerCase()] || word;
-    }
-
     // Improved regex for square feet
-    const sqftRegex = /(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*(?:sq(?:uare)?\.?\s*(?:ft|feet|foot)|ft\.?|5q\.?\s*ft)/i;
+    const sqftRegex = /(?:\(|\b)(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\w+)\s*(?:sq(?:uare)?\.?\s*(?:ft|feet|foot|ft)?|ft\.?|sq\.?\s*ft\.?)(?:\)|\b)/gi;
+    
 
-    // Regex for square meters
-    const sqmRegex = /(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*(?:sq(?:uare)?\.?\s*(?:m|meters?|metres?)|m\.?)/i;
-
-    // Function to extract all matches
+    // Function to extract all matches and log them to the console
     function extractAllMatches(regex, text) {
       const matches = [];
       let match;
+      let iterationCount = 0;
+      const maxIterations = 10000; // Safeguard to prevent infinite loop
+
       while ((match = regex.exec(text)) !== null) {
         let value = match[1].replace(/,/g, '');
-        if (isNaN(value)) {
-          value = wordToNumber(value);
+        let parsedValue = parseFloat(value);
+        if (!isNaN(parsedValue)) {
+          matches.push(parsedValue);
+          console.log(`Matched number: ${parsedValue}`);
+        } else {
+          console.log(`Failed to parse number: ${value}`);
         }
-        matches.push(parseFloat(value));
-        text = text.slice(match.index + match[0].length);
+        // Move to the next potential match
+        regex.lastIndex = match.index + match[0].length;
+
+        // Safeguard to prevent infinite loop
+        iterationCount++;
+        if (iterationCount > maxIterations) {
+          console.error('Exceeded maximum iterations in extractAllMatches');
+          break;
+        }
       }
       return matches;
     }
 
-    // Extract all square feet and square meter matches
+    // Extract all square feet matches
     let sqftMatches = extractAllMatches(sqftRegex, text);
-    let sqmMatches = extractAllMatches(sqmRegex, text);
-
-    // Convert sq m to sq ft if necessary
-    if (sqftMatches.length === 0 && sqmMatches.length > 0) {
-      sqftMatches = sqmMatches.map(sqm => sqm * 10.7639);
-    }
 
     // Get the largest value
     const squareFootage = Math.max(...sqftMatches, 0);
