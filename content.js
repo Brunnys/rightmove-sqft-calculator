@@ -6,16 +6,15 @@ const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 function extractPrice() {
   try {
-    const possiblePriceElements = document.querySelectorAll('*');
-    for (const element of possiblePriceElements) {
-      if (element.textContent.includes('£')) {
-        const priceText = element.textContent.trim();
-        const priceMatch = priceText.match(/£([\d,]+)/);
-        if (priceMatch) {
-          const price = priceMatch[0];
-          console.log('Extracted price:', price);
-          return price;
-        }
+    // Use a specific selector to find the price element
+    const priceElement = document.querySelector('div._1gfnqJ3Vtd1z40MlC0MzXu > span');
+    if (priceElement) {
+      const priceText = priceElement.textContent.trim();
+      const priceMatch = priceText.match(/£([\d,]+)/);
+      if (priceMatch) {
+        const price = priceMatch[0];
+        console.log('Extracted price:', price);
+        return price;
       }
     }
     console.log('Price not found');
