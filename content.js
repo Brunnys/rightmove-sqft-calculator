@@ -46,11 +46,11 @@ async function extractSquareFootage(floorplanUrl) {
       console.log('Navigating to floorplan page...');
       window.location.href = floorplanUrl;
       // Wait for page load
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     // Now we should be on the floorplan page
-    const floorplanImage = await retrySelector('img[src*="FLP_00"]', 5, 1000);
+    const floorplanImage = await retrySelector('img[src*="FLP_00"]', 5, 500);
     if (!floorplanImage) {
       throw new Error('Floorplan image not found on page');
     }
