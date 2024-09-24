@@ -87,10 +87,10 @@ async function extractSquareFootage(floorplanUrl) {
     }
 
     // Improved regex for square feet
-    const sqftRegex = /(?:\(|\b)(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\w+)\s*(?:sq(?:uare)?\.?\s*(?:ft|feet|foot|ft)?|ft\.?|sq\.?\s*ft\.?)(?:\)|\b)/gi;
+    const sqftRegex = /(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*(?:sq(?:uare)?\.?\s*(?:ft|feet|foot)|ft\.?|5q\.?\s*ft)/i;
 
     // Regex for square meters
-    const sqmRegex = /(?:\(|\b)(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\w+)\s*(?:sq(?:uare)?\.?\s*(?:m|meters?|metres?|m2)?|m\.?|sq\.?\s*m\.?)(?:\)|\b)/gi;
+    const sqmRegex = /(\d{1,3}(?:,\d{3})*(?:\.\d+)?)\s*(?:sq(?:uare)?\.?\s*(?:m|meters?|metres?)|m\.?)/i;
 
     // Function to extract all matches
     function extractAllMatches(regex, text) {
