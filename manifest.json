@@ -1,15 +1,14 @@
 {
     "manifest_version": 3,
-    "name": "Rightmove Price Calculator",
+    "name": "SquareCalc",
     "version": "1.0",
-    "description": "Calculate price per square foot for Rightmove listings",
+    "description": "Calculate price per square foot/meter for Rightmove listings",
     "permissions": [
-        "activeTab",
         "storage",
-        "https://www.rightmove.co.uk/*"
+        "activeTab"
     ],
     "host_permissions": [
-        "https://media.rightmove.co.uk/*"
+        "https://*.rightmove.co.uk/*"
     ],
     "background": {
         "service_worker": "background.js"
