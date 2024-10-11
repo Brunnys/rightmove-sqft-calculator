@@ -58,15 +58,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function saveResults() {
-      const results = {
-        price: priceElement.textContent,
-        squareFootage: squareFootageElement.textContent,
-        pricePerSqFt: pricePerSqFtElement.textContent,
-        timestamp: new Date().toISOString()
-      };
-      chrome.storage.local.set({ [currentUrl]: results }, function() {
-        console.log('Results saved');
-        updateLastUpdatedTime(results.timestamp);
+      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        const currentUrl = tabs[0].url;
+        const propertyId = getPropertyIdFromUrl(currentUrl);
+        if (propertyId) {
+          const results = {
+            price: priceElement.textContent,
+            squareFootage: squareFootageElement.textContent,
+            pricePerSqFt: pricePerSqFtElement.textContent,
+            timestamp: new Date().toISOString()
+          };
+          chrome.storage.local.set({ [propertyId]: results }, function() {
+            console.log('Results saved for property ID:', propertyId);
+            updateLastUpdatedTime(results.timestamp);
+          });
+        }
       });
     }
 
@@ -82,18 +88,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadResults() {
       chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        currentUrl = tabs[0].url;
-        chrome.storage.local.get(currentUrl, function(result) {
-          if (result[currentUrl]) {
-            if (result[currentUrl].manualSquareFootage) {
-              const manualValue = result[currentUrl].manualSquareFootage;
-              squareFootageElement.textContent = `${manualValue.toFixed(2)} sq ft (edited)`;
-              squareFootageInput.value = manualValue;
-            } else {
-              updateDisplay(result[currentUrl]);
+        const currentUrl = tabs[0].url;
+        const propertyId = getPropertyIdFromUrl(currentUrl);
+        if (propertyId) {
+          chrome.storage.local.get(propertyId, function(result) {
+            if (result[propertyId]) {
+              updateDisplay(result[propertyId]);
             }
-          }
-        });
+          });
+        }
       });
     }
 
@@ -237,4 +240,9 @@ document.addEventListener('DOMContentLoaded', function() {
     unitToggle.addEventListener('change', function() {
       chrome.storage.local.set({unitToggleState: this.checked});
     });
-  });
+});
+
+function getPropertyIdFromUrl(url) {
+  const match = url.match(/\/properties\/(\d+)/);
+  return match ? match[1] : null;
+}
