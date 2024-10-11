@@ -104,7 +104,8 @@ body {
 }
 
 .calculate-button:hover {
-  background-color: #1D4ED8;
+  background-color: #00DEB6;
+  color: #1E3A8A;
 }
 
 .spinner {
@@ -191,7 +192,7 @@ body {
 }
 
 input:checked + .slider {
-  background-color: #2196F3;
+  background-color: #00DEB6;
 }
 
 input:checked + .slider:before {
