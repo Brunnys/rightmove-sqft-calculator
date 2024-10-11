@@ -57,7 +57,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-end; /* Align items to the right */
-  gap: 4px; /* Adjust this value to control the spacing between the value and the switch */
 }
 
 .edit-button {
@@ -68,7 +67,7 @@ body {
   border: none;
   cursor: pointer;
   color: #1E40AF;
-  margin-left: 4px;
+  margin-right: 4px; /* Add some space between the button and the value */
 }
 
 .hidden {
@@ -104,7 +103,8 @@ body {
 }
 
 .calculate-button:hover {
-  background-color: #1D4ED8;
+  background-color: #00DEB6;
+  color: #1E3A8A;
 }
 
 .spinner {
@@ -191,7 +191,7 @@ body {
 }
 
 input:checked + .slider {
-  background-color: #2196F3;
+  background-color: #00DEB6;
 }
 
 input:checked + .slider:before {
@@ -216,4 +216,12 @@ input:checked + .slider:before {
 
 .disclaimer a:hover {
   text-decoration: underline;
+}
+
+#squareFootage {
+  order: 2; /* Move the square footage value to the right of the edit button */
+}
+
+#squareFootageInput {
+  order: 2; /* Ensure the input field also appears to the right of the edit button when visible */
 }

@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const unitToggle = document.getElementById('unitToggle');
     const squareFootageLabel = document.getElementById('squareFootageLabel');
     const pricePerSqFtLabel = document.getElementById('pricePerSqFtLabel');
+    const unitLabel = document.getElementById('unitLabel');
 
     let currentUrl = '';
     let isEditing = false;
@@ -57,15 +58,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function saveResults() {
-      const results = {
-        price: priceElement.textContent,
-        squareFootage: squareFootageElement.textContent,
-        pricePerSqFt: pricePerSqFtElement.textContent,
-        timestamp: new Date().toISOString()
-      };
-      chrome.storage.local.set({ [currentUrl]: results }, function() {
-        console.log('Results saved');
-        updateLastUpdatedTime(results.timestamp);
+      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        const currentUrl = tabs[0].url;
+        const propertyId = getPropertyIdFromUrl(currentUrl);
+        if (propertyId) {
+          const results = {
+            price: priceElement.textContent,
+            squareFootage: squareFootageElement.textContent,
+            pricePerSqFt: pricePerSqFtElement.textContent,
+            timestamp: new Date().toISOString()
+          };
+          chrome.storage.local.set({ [propertyId]: results }, function() {
+            console.log('Results saved for property ID:', propertyId);
+            updateLastUpdatedTime(results.timestamp);
+          });
+        }
       });
     }
 
@@ -81,18 +88,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadResults() {
       chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        currentUrl = tabs[0].url;
-        chrome.storage.local.get(currentUrl, function(result) {
-          if (result[currentUrl]) {
-            if (result[currentUrl].manualSquareFootage) {
-              const manualValue = result[currentUrl].manualSquareFootage;
-              squareFootageElement.textContent = `${manualValue.toFixed(2)} sq ft (edited)`;
-              squareFootageInput.value = manualValue;
-            } else {
-              updateDisplay(result[currentUrl]);
+        const currentUrl = tabs[0].url;
+        const propertyId = getPropertyIdFromUrl(currentUrl);
+        if (propertyId) {
+          chrome.storage.local.get(propertyId, function(result) {
+            if (result[propertyId]) {
+              updateDisplay(result[propertyId]);
             }
-          }
-        });
+          });
+        }
       });
     }
 
@@ -183,42 +187,62 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     unitToggle.addEventListener('change', function() {
-      if (unitToggle.checked) {
-        // Convert to meters
+      if (this.checked) {
         convertToMeters();
       } else {
-        // Convert to feet
         convertToFeet();
       }
     });
 
     function convertToMeters() {
+      unitLabel.textContent = 'Price per sq m';
+      squareFootageLabel.textContent = 'Square Meters:';
+      // Convert square footage to square meters
       const squareFootage = parseFloat(squareFootageElement.textContent);
       if (!isNaN(squareFootage)) {
         const squareMeters = (squareFootage / 10.7639).toFixed(2);
         squareFootageElement.textContent = `${squareMeters} sq m`;
-        squareFootageLabel.textContent = 'Square Meters:';
-        const pricePerSqFt = parseFloat(pricePerSqFtElement.textContent.replace(/[£,]/g, ''));
-        if (!isNaN(pricePerSqFt)) {
-          const pricePerSqM = Math.round(pricePerSqFt * 10.7639); // Round to the nearest whole pound
-          pricePerSqFtElement.textContent = `£${pricePerSqM}`;
-          pricePerSqFtLabel.textContent = 'Price per sq m:';
-        }
+      }
+      // Convert price per sq ft to price per sq m
+      const pricePerSqFt = parseFloat(pricePerSqFtElement.textContent.replace(/[£,]/g, ''));
+      if (!isNaN(pricePerSqFt)) {
+        const pricePerSqM = Math.round(pricePerSqFt * 10.7639);
+        pricePerSqFtElement.textContent = `£${pricePerSqM}`;
       }
     }
 
     function convertToFeet() {
+      unitLabel.textContent = 'Price per sq ft';
+      squareFootageLabel.textContent = 'Square Feet:';
+      // Convert square meters to square feet
       const squareMeters = parseFloat(squareFootageElement.textContent);
       if (!isNaN(squareMeters)) {
         const squareFootage = (squareMeters * 10.7639).toFixed(2);
         squareFootageElement.textContent = `${squareFootage} sq ft`;
-        squareFootageLabel.textContent = 'Square Feet:';
-        const pricePerSqM = parseFloat(pricePerSqFtElement.textContent.replace(/[£,]/g, ''));
-        if (!isNaN(pricePerSqM)) {
-          const pricePerSqFt = Math.round(pricePerSqM / 10.7639); // Round to the nearest whole pound
-          pricePerSqFtElement.textContent = `£${pricePerSqFt}`;
-          pricePerSqFtLabel.textContent = 'Price per sq ft:';
-        }
+      }
+      // Convert price per sq m to price per sq ft
+      const pricePerSqM = parseFloat(pricePerSqFtElement.textContent.replace(/[£,]/g, ''));
+      if (!isNaN(pricePerSqM)) {
+        const pricePerSqFt = Math.round(pricePerSqM / 10.7639);
+        pricePerSqFtElement.textContent = `£${pricePerSqFt}`;
       }
     }
-  });
+
+    // Load saved toggle state
+    chrome.storage.local.get('unitToggleState', function(result) {
+      unitToggle.checked = result.unitToggleState || false;
+      if (unitToggle.checked) {
+        convertToMeters();
+      }
+    });
+
+    // Save toggle state when changed
+    unitToggle.addEventListener('change', function() {
+      chrome.storage.local.set({unitToggleState: this.checked});
+    });
+});
+
+function getPropertyIdFromUrl(url) {
+  const match = url.match(/\/properties\/(\d+)/);
+  return match ? match[1] : null;
+}
