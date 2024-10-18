@@ -6,7 +6,7 @@ body {
 
 .card {
   width: 350px;
-  height: 300px;
+  height: 350px;
   background: linear-gradient(to bottom right, #EBF4FF, #E0E7FF);
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -200,7 +200,6 @@ input:checked + .slider:before {
 
 /* Disclaimer styling */
 .disclaimer {
-  margin-top: 10px;
   font-size: 10px;
   color: #666;
 }
@@ -224,4 +223,14 @@ input:checked + .slider:before {
 
 #squareFootageInput {
   order: 2; /* Ensure the input field also appears to the right of the edit button when visible */
+}
+
+.privacy-settings {
+  font-size: 10px;
+  color: #666;
+}
+.opt-out-checkbox {
+  width: 8px;
+  height: 8px;
+  margin-right: 5px;
 }

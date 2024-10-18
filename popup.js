@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const squareFootageLabel = document.getElementById('squareFootageLabel');
     const pricePerSqFtLabel = document.getElementById('pricePerSqFtLabel');
     const unitLabel = document.getElementById('unitLabel');
+    const analyticsOptOut = document.getElementById('analyticsOptOut');
 
     let currentUrl = '';
     let isEditing = false;
@@ -243,4 +244,22 @@ document.addEventListener('DOMContentLoaded', function() {
       const match = url.match(/\/properties\/(\d+)/);
       return match ? match[1] : null;
     }
+
+    // Load opt-out preference
+    chrome.storage.local.get('analyticsOptOut', function(result) {
+      analyticsOptOut.checked = result.analyticsOptOut || false;
+      if (analyticsOptOut.checked) {
+        posthog.opt_out_capturing();
+      }
+    });
+
+    // Handle opt-out change
+    analyticsOptOut.addEventListener('change', function() {
+      if (this.checked) {
+        posthog.opt_out_capturing();
+      } else {
+        posthog.opt_in_capturing();
+      }
+      chrome.storage.local.set({analyticsOptOut: this.checked});
+    });
 });
