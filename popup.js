@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const squareFootageLabel = document.getElementById('squareFootageLabel');
     const pricePerSqFtLabel = document.getElementById('pricePerSqFtLabel');
     const unitLabel = document.getElementById('unitLabel');
+    const analyticsOptOut = document.getElementById('analyticsOptOut');
 
     let currentUrl = '';
     let isEditing = false;
@@ -192,6 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
       } else {
         convertToFeet();
       }
+      chrome.storage.local.set({unitToggleState: this.checked});
     });
 
     function convertToMeters() {
@@ -230,19 +232,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load saved toggle state
     chrome.storage.local.get('unitToggleState', function(result) {
-      unitToggle.checked = result.unitToggleState || false;
+      unitToggle.checked = result.unitToggleState === true; // Explicitly check for true
       if (unitToggle.checked) {
         convertToMeters();
+      } else {
+        convertToFeet(); // Ensure we're in feet mode if toggle is off or undefined
       }
     });
 
-    // Save toggle state when changed
-    unitToggle.addEventListener('change', function() {
-      chrome.storage.local.set({unitToggleState: this.checked});
+    function getPropertyIdFromUrl(url) {
+      const match = url.match(/\/properties\/(\d+)/);
+      return match ? match[1] : null;
+    }
+
+    // Load opt-out preference
+    chrome.storage.local.get('analyticsOptOut', function(result) {
+      analyticsOptOut.checked = result.analyticsOptOut || false;
+      if (analyticsOptOut.checked) {
+        posthog.opt_out_capturing();
+      }
+    });
+
+    // Handle opt-out change
+    analyticsOptOut.addEventListener('change', function() {
+      if (this.checked) {
+        posthog.opt_out_capturing();
+      } else {
+        posthog.opt_in_capturing();
+      }
+      chrome.storage.local.set({analyticsOptOut: this.checked});
     });
 });
-
-function getPropertyIdFromUrl(url) {
-  const match = url.match(/\/properties\/(\d+)/);
-  return match ? match[1] : null;
-}

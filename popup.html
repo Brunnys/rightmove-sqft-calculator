@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <title>Property SquareCalc</title>
   <link rel="stylesheet" href="popup.css">
+  <script src="array.js"></script>
+  <script src="posthog-config.js"></script>
 </head>
 <body>
   <div class="card">
@@ -48,10 +50,15 @@
           <span class="button-text">Calculate</span>
         </button>
         <div id="lastUpdated" class="last-updated hidden"></div>
-        <!-- Disclaimer and Feedback Link -->
         <div class="disclaimer">
           <p>Please note that SquareCalc is in no way affiliated with Rightmove. We are a third party tool. SquareCalc only works on Rightmove UK domains</p>
           <p><a href="https://forms.gle/n9uHByf29bEPTBwDA" target="_blank">Click here to report an issue</a></p>
+          <div class="privacy-settings">
+            <label class="opt-out-label">
+              <span class="opt-out-text">Opt-out of analytics</span>
+              <input type="checkbox" id="analyticsOptOut" class="opt-out-checkbox"> 
+            </label>
+          </div>
         </div>
       </div>
     </div>
