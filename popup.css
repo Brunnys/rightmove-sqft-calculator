@@ -155,9 +155,8 @@ body {
 .switch {
   position: relative;
   display: inline-block;
-  width: 34px;
+  width: 40px;
   height: 20px;
-  margin-left: 4px; /* Adjust this value to control the spacing between the value and the switch */
 }
 
 .switch input {
@@ -181,21 +180,21 @@ body {
 .slider:before {
   position: absolute;
   content: "";
-  height: 14px;
-  width: 14px;
-  left: 3px;
-  bottom: 3px;
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
   background-color: white;
   transition: .4s;
   border-radius: 50%;
 }
 
 input:checked + .slider {
-  background-color: #00DEB6;
+  background-color: #2196F3;
 }
 
 input:checked + .slider:before {
-  transform: translateX(14px);
+  transform: translateX(20px);
 }
 
 /* Disclaimer styling */
@@ -233,4 +232,17 @@ input:checked + .slider:before {
   width: 8px;
   height: 8px;
   margin-right: 5px;
+}
+
+.unit-toggle-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1px;
+}
+
+.unit-toggle-label {
+  font-size: 12px;
+  color: #1E40AF;
+  font-weight: bold;
 }
